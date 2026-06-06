@@ -1,405 +1,486 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ANMA — AI-Native Modular Architecture</title>
-<meta name="description" content="Machine-readable module contracts for AI coding agents. ~350 tokens per module instead of re-reading thousands of lines of source code.">
-<meta property="og:title" content="ANMA — AI-Native Modular Architecture">
-<meta property="og:description" content="Machine-readable module contracts for AI coding agents. ~350 tokens per module.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://anmalabs.dev">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ANMA — Boundary enforcement for AI coding agents</title>
+<meta name="description" content="Plain-YAML module contracts compiled into the CLAUDE.md, hooks, and CI checks that keep AI coding agents inside your architecture. In a 20-trial benchmark, a cheaper model's boundary-violation rate dropped from ~68% to 0." />
+<meta property="og:title" content="ANMA — Boundary enforcement for AI coding agents" />
+<meta property="og:description" content="Contracts compiled into CLAUDE.md, hooks, and CI. A cheaper model violated a module boundary ~68% of the time; with ANMA, 0 of 20." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://anmalabs.dev" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0a0a0c;--bg2:#111116;--bg3:#1a1a22;
-  --fg:#e8e6e3;--fg2:#9995a0;
-  --accent:#22d3a7;--accent2:#16a085;--accent-glow:rgba(34,211,167,.12);
-  --red:#e74c5f;--yellow:#f0c946;--blue:#5b9cf5;
-  --mono:'JetBrains Mono',monospace;--sans:'Outfit',sans-serif;
-}
-html{scroll-behavior:smooth;font-size:16px}
-body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.6;overflow-x:hidden}
-body::before{
-  content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-}
-.grid-bg{
-  position:fixed;inset:0;z-index:0;
-  background-image:linear-gradient(rgba(34,211,167,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,167,.03) 1px,transparent 1px);
-  background-size:60px 60px;
-}
-.container{max-width:1100px;margin:0 auto;padding:0 2rem;position:relative;z-index:1}
-
-/* HERO */
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:6rem 0 4rem}
-.hero-badge{
-  display:inline-flex;align-items:center;gap:.5rem;
-  font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--accent);background:var(--accent-glow);
-  padding:.4rem .9rem;border-radius:2px;border:1px solid rgba(34,211,167,.15);margin-bottom:2rem;
-}
-.hero-badge .dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.hero h1{font-size:clamp(2.8rem,6vw,5rem);font-weight:800;line-height:1.05;letter-spacing:-.03em;max-width:16ch;margin-bottom:1.5rem}
-.hero h1 .thin{font-weight:300;color:var(--fg2)}
-.hero h1 .highlight{color:var(--accent)}
-.hero-sub{font-size:1.25rem;color:var(--fg2);max-width:48ch;margin-bottom:3rem;font-weight:300;line-height:1.5}
-.hero-actions{display:flex;gap:1rem;flex-wrap:wrap}
-.btn{
-  display:inline-flex;align-items:center;gap:.5rem;
-  padding:.85rem 1.8rem;font-family:var(--mono);font-size:.85rem;font-weight:500;
-  text-decoration:none;border-radius:3px;transition:all .2s;letter-spacing:.02em;
-}
-.btn-primary{background:var(--accent);color:var(--bg);border:1px solid var(--accent)}
-.btn-primary:hover{background:#1be8b5;box-shadow:0 0 30px rgba(34,211,167,.25)}
-.btn-secondary{background:transparent;color:var(--fg);border:1px solid rgba(255,255,255,.15)}
-.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
-
-/* NUMBERS */
-.numbers{padding:5rem 0;border-top:1px solid rgba(255,255,255,.06)}
-.numbers-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fg2);margin-bottom:2.5rem}
-.numbers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem}
-.stat{padding:1.5rem 0}
-.stat-value{font-size:clamp(2.2rem,4vw,3.2rem);font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.stat-value .unit{font-size:.5em;color:var(--fg2);font-weight:400;margin-left:.15em}
-.stat-label{font-size:.85rem;color:var(--fg2);margin-top:.3rem;font-weight:300}
-.stat--accent .stat-value{color:var(--accent)}
-
-/* PROBLEM */
-.problem{padding:6rem 0}
-.section-tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:1.5rem;display:block}
-.section-tag--green{color:var(--accent)}
-.problem h2{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-.02em;max-width:24ch;margin-bottom:2rem}
-.problem-body{display:grid;grid-template-columns:1fr 1fr;gap:4rem}
-.problem-text{color:var(--fg2);font-size:1.05rem;font-weight:300;line-height:1.7}
-.problem-text p+p{margin-top:1.5rem}
-.compare{display:flex;flex-direction:column;gap:1.5rem;justify-content:center}
-.compare-item{position:relative}
-.compare-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;color:var(--fg2);margin-bottom:.5rem;display:flex;justify-content:space-between}
-.compare-bar{height:36px;border-radius:3px;position:relative;display:flex;align-items:center;padding-left:1rem}
-.compare-bar span{font-family:var(--mono);font-size:.75rem;font-weight:500}
-.bar-old{background:linear-gradient(90deg,rgba(231,76,95,.2),rgba(231,76,95,.08));border:1px solid rgba(231,76,95,.2);width:100%}
-.bar-old span{color:var(--red)}
-.bar-new{background:linear-gradient(90deg,var(--accent-glow),rgba(34,211,167,.03));border:1px solid rgba(34,211,167,.2);width:30%}
-.bar-new span{color:var(--accent)}
-
-/* HOW */
-.how{padding:6rem 0;border-top:1px solid rgba(255,255,255,.06)}
-.how h2{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin-bottom:3.5rem}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.step{background:var(--bg2);padding:2.5rem 2rem;position:relative}
-.step::before{content:attr(data-step);font-family:var(--mono);font-size:5rem;font-weight:700;color:rgba(255,255,255,.03);position:absolute;top:.5rem;right:1rem;line-height:1}
-.step-title{font-family:var(--mono);font-size:.85rem;font-weight:700;color:var(--accent);margin-bottom:.75rem;letter-spacing:.02em}
-.step p{color:var(--fg2);font-size:.9rem;font-weight:300;line-height:1.6}
-
-/* TERMINAL */
-.demo{padding:6rem 0;border-top:1px solid rgba(255,255,255,.06)}
-.demo h2{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin-bottom:3rem}
-.terminal{background:var(--bg2);border:1px solid rgba(255,255,255,.08);border-radius:6px;overflow:hidden;max-width:750px}
-.terminal-bar{display:flex;align-items:center;gap:6px;padding:.75rem 1rem;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06)}
-.terminal-dot{width:10px;height:10px;border-radius:50%}
-.terminal-dot:nth-child(1){background:#e74c5f}
-.terminal-dot:nth-child(2){background:#f0c946}
-.terminal-dot:nth-child(3){background:#22d3a7}
-.terminal-title{font-family:var(--mono);font-size:.7rem;color:var(--fg2);margin-left:auto}
-.terminal-body{padding:1.5rem;font-family:var(--mono);font-size:.8rem;line-height:1.8}
-.terminal-body .prompt{color:var(--accent)}
-.terminal-body .cmd{color:var(--fg)}
-.terminal-body .output{color:var(--fg2)}
-.terminal-body .success{color:var(--accent)}
-.terminal-body .line{display:block;min-height:1.8em}
-
-/* BENCHMARKS */
-.bench{padding:6rem 0;border-top:1px solid rgba(255,255,255,.06)}
-.bench h2{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin-bottom:1rem}
-.bench-sub{color:var(--fg2);font-size:1.1rem;font-weight:300;margin-bottom:3rem;max-width:55ch}
-.bench-table{width:100%;border-collapse:collapse;font-size:.85rem}
-.bench-table th{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--fg2);text-align:left;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.1)}
-.bench-table th:not(:first-child){text-align:right}
-.bench-table td{padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.04);color:var(--fg2);font-weight:300}
-.bench-table td:not(:first-child){text-align:right;font-family:var(--mono);font-size:.8rem}
-.bench-table td:first-child{color:var(--fg);font-weight:400}
-.bench-table .highlight-cell{color:var(--accent);font-weight:500}
-.bench-table .dim-cell{color:var(--red)}
-.bench-link{margin-top:2rem;display:block}
-.bench-link a{color:var(--accent);font-family:var(--mono);font-size:.85rem;text-decoration:none;border-bottom:1px solid rgba(34,211,167,.3)}
-.bench-link a:hover{border-color:var(--accent)}
-
-/* RECOVERY */
-.recovery{padding:6rem 0;border-top:1px solid rgba(255,255,255,.06)}
-.recovery h2{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin-bottom:1rem}
-.recovery-sub{color:var(--fg2);font-size:1.1rem;font-weight:300;margin-bottom:3rem;max-width:50ch}
-.files-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.file-card{background:var(--bg2);padding:1.5rem;position:relative;overflow:hidden}
-.file-card::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);opacity:.4}
-.file-name{font-family:var(--mono);font-size:.85rem;font-weight:700;color:var(--accent);margin-bottom:.4rem}
-.file-desc{font-size:.8rem;color:var(--fg2);font-weight:300;line-height:1.5}
-.file-tokens{font-family:var(--mono);font-size:.7rem;color:var(--fg2);margin-top:.75rem;opacity:.6}
-
-/* DEMOS */
-.demos{padding:6rem 0;border-top:1px solid rgba(255,255,255,.06)}
-.demos h2{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin-bottom:3rem}
-.demo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.demo-card{background:var(--bg2);padding:2rem;text-decoration:none;transition:border-color .2s;border:1px solid transparent}
-.demo-card:hover{border-color:rgba(34,211,167,.2)}
-.demo-card-title{font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:.5rem}
-.demo-card-meta{font-family:var(--mono);font-size:.7rem;color:var(--fg2);margin-bottom:.75rem}
-.demo-card p{font-size:.85rem;color:var(--fg2);font-weight:300;line-height:1.5}
-
-/* CTA */
-.cta{padding:8rem 0 6rem;text-align:center;border-top:1px solid rgba(255,255,255,.06)}
-.cta h2{font-size:clamp(2rem,4vw,3rem);font-weight:700;letter-spacing:-.02em;margin-bottom:1rem}
-.cta p{color:var(--fg2);font-size:1.1rem;font-weight:300;margin-bottom:2.5rem}
-.cta .hero-actions{justify-content:center}
-
-/* FOOTER */
-footer{padding:2rem 0;border-top:1px solid rgba(255,255,255,.06);font-family:var(--mono);font-size:.7rem;color:rgba(255,255,255,.25);display:flex;justify-content:space-between;align-items:center}
-footer a{color:rgba(255,255,255,.4);text-decoration:none}
-footer a:hover{color:var(--accent)}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  .problem-body{grid-template-columns:1fr;gap:2.5rem}
-  .steps,.files-grid,.demo-grid{grid-template-columns:1fr}
-  .numbers-grid{grid-template-columns:repeat(2,1fr)}
-  .bench-table{font-size:.75rem}
-  .bench-table td,.bench-table th{padding:.5rem .6rem}
-  footer{flex-direction:column;gap:.5rem;text-align:center}
-}
-
-@media(prefers-reduced-motion:no-preference){
-  .hero h1,.hero-sub,.hero-badge,.hero-actions,.stat,.step,.file-card,.compare-item,.demo-card{
-    opacity:0;animation:fadeUp .6s ease forwards;
+  :root {
+    --bg: #0a0c0f;
+    --bg-1: #0f1318;
+    --bg-2: #141a20;
+    --line: #232b34;
+    --line-soft: #1a212a;
+    --ink: #e8edf2;
+    --ink-dim: #97a3b0;
+    --ink-faint: #5c6873;
+    --pass: #36d399;      /* boundary respected */
+    --pass-dim: #1c6b51;
+    --block: #ff5c6c;     /* violation / blocked */
+    --block-dim: #7a2730;
+    --amber: #ffb44d;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "IBM Plex Sans", system-ui, sans-serif;
+    --maxw: 1080px;
   }
-  .hero-badge{animation-delay:.1s}.hero h1{animation-delay:.2s}.hero-sub{animation-delay:.3s}.hero-actions{animation-delay:.4s}
-  .stat:nth-child(1){animation-delay:.1s}.stat:nth-child(2){animation-delay:.2s}.stat:nth-child(3){animation-delay:.3s}.stat:nth-child(4){animation-delay:.4s}
-  .step:nth-child(1){animation-delay:.1s}.step:nth-child(2){animation-delay:.2s}.step:nth-child(3){animation-delay:.3s}
-  .file-card{animation-delay:calc(var(--i,0) * .08s)}
-  .compare-item:nth-child(1){animation-delay:.1s}.compare-item:nth-child(2){animation-delay:.3s}
-  .demo-card:nth-child(1){animation-delay:.1s}.demo-card:nth-child(2){animation-delay:.2s}.demo-card:nth-child(3){animation-delay:.3s}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(900px 500px at 78% -10%, rgba(54,211,153,.07), transparent 60%),
+      radial-gradient(700px 400px at 0% 100%, rgba(255,180,77,.04), transparent 55%);
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; position: relative; z-index: 1; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Top bar */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(10px);
+    background: rgba(10,12,15,.72);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .brand { font-family: var(--mono); font-weight: 700; letter-spacing: .14em; font-size: 15px; }
+  .brand .dot { color: var(--pass); }
+  .nav-links { display: flex; gap: 26px; align-items: center; font-size: 14px; }
+  .nav-links a { color: var(--ink-dim); transition: color .15s; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links .gh { color: var(--ink); border: 1px solid var(--line); padding: 7px 14px; border-radius: 6px; font-family: var(--mono); font-size: 13px; }
+  .nav-links .gh:hover { border-color: var(--pass-dim); }
+  @media (max-width: 680px){ .nav-links a:not(.gh){ display:none; } }
+
+  /* Hero */
+  .hero { padding: 96px 0 64px; position: relative; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--ink-faint); display: inline-flex; align-items: center; gap: 10px; margin-bottom: 26px;
+  }
+  .eyebrow .pill { color: var(--pass); border: 1px solid var(--pass-dim); padding: 3px 9px; border-radius: 100px; font-size: 11px; }
+  h1 {
+    font-size: clamp(34px, 5.4vw, 60px); line-height: 1.04; letter-spacing: -0.02em; font-weight: 700;
+    max-width: 16ch;
+  }
+  h1 .accent { color: var(--pass); }
+  .lede { color: var(--ink-dim); font-size: clamp(16px, 2vw, 19px); max-width: 56ch; margin-top: 24px; }
+  .lede code { font-family: var(--mono); color: var(--ink); background: var(--bg-2); padding: 1px 6px; border-radius: 4px; font-size: .9em; }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 36px; align-items: center; }
+  .install {
+    font-family: var(--mono); font-size: 14px; background: var(--bg-1); border: 1px solid var(--line);
+    border-radius: 8px; padding: 12px 14px; display: inline-flex; align-items: center; gap: 12px; color: var(--ink);
+    cursor: pointer; transition: border-color .15s;
+  }
+  .install:hover { border-color: var(--pass-dim); }
+  .install .pfx { color: var(--ink-faint); }
+  .install .cmd .x { color: var(--pass); }
+  .install .copy { color: var(--ink-faint); font-size: 12px; border-left: 1px solid var(--line); padding-left: 12px; }
+  .btn {
+    font-family: var(--mono); font-size: 14px; padding: 12px 18px; border-radius: 8px; border: 1px solid var(--line);
+    color: var(--ink); transition: all .15s;
+  }
+  .btn.primary { background: var(--pass); color: #04150e; border-color: var(--pass); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn:hover { border-color: var(--ink-faint); }
+
+  /* Instrument readout */
+  .readout {
+    margin-top: 60px; border: 1px solid var(--line); border-radius: 14px; background:
+      linear-gradient(180deg, var(--bg-1), var(--bg));
+    overflow: hidden;
+  }
+  .readout-head {
+    display: flex; justify-content: space-between; align-items: center; padding: 14px 20px;
+    border-bottom: 1px solid var(--line-soft); font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
+    letter-spacing: .08em;
+  }
+  .readout-head .live { color: var(--pass); display: inline-flex; align-items: center; gap: 7px; }
+  .readout-head .live::before { content:""; width:7px; height:7px; border-radius:50%; background: var(--pass); box-shadow: 0 0 8px var(--pass); }
+  .gauge { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; padding: 40px 28px; }
+  @media (max-width: 680px){ .gauge { grid-template-columns: 1fr; gap: 30px; text-align: center; } }
+  .arm-label { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px; }
+  .big { font-family: var(--mono); font-weight: 700; font-size: clamp(40px, 7vw, 68px); line-height: 1; letter-spacing: -.02em; }
+  .big.block { color: var(--block); }
+  .big.pass { color: var(--pass); }
+  .arm-sub { font-size: 13.5px; color: var(--ink-dim); margin-top: 10px; }
+  .arrow { font-family: var(--mono); color: var(--ink-faint); font-size: 13px; text-align: center; }
+  .arrow .line { height:1px; background: linear-gradient(90deg, var(--block-dim), var(--pass-dim)); margin: 8px 0; }
+  @media (max-width: 680px){ .arrow .line { width: 60%; margin: 0 auto; } }
+  .readout-foot { border-top: 1px solid var(--line-soft); padding: 12px 20px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); display:flex; flex-wrap:wrap; gap: 6px 18px; justify-content: space-between; }
+  .readout-foot .stat strong { color: var(--ink-dim); font-weight: 600; }
+
+  /* Sections */
+  section { padding: 76px 0; border-top: 1px solid var(--line-soft); }
+  .kicker { font-family: var(--mono); font-size: 12.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--pass); margin-bottom: 16px; }
+  h2 { font-size: clamp(26px, 3.6vw, 38px); letter-spacing: -.015em; line-height: 1.1; max-width: 20ch; }
+  .section-lede { color: var(--ink-dim); max-width: 60ch; margin-top: 16px; font-size: 16.5px; }
+
+  /* Two-tier */
+  .tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 40px; }
+  @media (max-width: 760px){ .tiers { grid-template-columns: 1fr; } }
+  .tier { border: 1px solid var(--line); border-radius: 14px; padding: 28px; background: var(--bg-1); position: relative; }
+  .tier .tag { font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .tier h3 { font-size: 20px; margin: 8px 0 4px; }
+  .tier .verdict { font-family: var(--mono); font-size: 14px; margin: 18px 0; padding: 12px 14px; border-radius: 8px; }
+  .tier.frontier .verdict { background: rgba(151,163,176,.08); color: var(--ink-dim); border:1px solid var(--line); }
+  .tier.cheap .verdict { background: rgba(54,211,153,.08); color: var(--pass); border:1px solid var(--pass-dim); }
+  .tier p { color: var(--ink-dim); font-size: 14.5px; }
+  .tier .num { font-family: var(--mono); color: var(--ink); }
+  .insight {
+    margin-top: 22px; font-family: var(--mono); font-size: 15px; color: var(--ink); border-left: 2px solid var(--pass);
+    padding: 4px 0 4px 18px;
+  }
+
+  /* How it works */
+  .flow { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; align-items: start; }
+  @media (max-width: 820px){ .flow { grid-template-columns: 1fr; gap: 32px; } }
+  .tree { font-family: var(--mono); font-size: 13px; line-height: 1.85; background: var(--bg-1); border: 1px solid var(--line); border-radius: 12px; padding: 22px; color: var(--ink-dim); overflow-x:auto; }
+  .tree .gen { color: var(--pass); }
+  .tree .src { color: var(--ink); }
+  .tree .cm { color: var(--ink-faint); }
+  .layers .layer { border:1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-bottom: 14px; background: var(--bg-1); }
+  .layers .layer h4 { font-family: var(--mono); font-size: 14px; letter-spacing: .04em; display:flex; align-items:center; gap:10px; }
+  .layers .layer h4 .b { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 600; }
+  .layers .guide h4 .b { background: rgba(54,211,153,.12); color: var(--pass); }
+  .layers .enforce h4 .b { background: rgba(255,92,108,.12); color: var(--block); }
+  .layers .layer p { color: var(--ink-dim); font-size: 14px; margin-top: 10px; }
+  .hookline { font-family: var(--mono); font-size: 12.5px; margin-top: 14px; background: var(--bg); border:1px solid var(--line); border-radius:8px; padding: 12px; color: var(--ink-dim); }
+  .hookline .exit { color: var(--block); }
+  .hookline .msg { color: var(--amber); }
+
+  /* Benchmark table */
+  .tablewrap { margin-top: 36px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+  thead th { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); background: var(--bg-1); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.mono, th.mono { font-family: var(--mono); }
+  .v-block { color: var(--block); font-family: var(--mono); }
+  .v-pass { color: var(--pass); font-family: var(--mono); }
+  .dash { color: var(--ink-faint); }
+  .method { color: var(--ink-faint); font-size: 13px; margin-top: 18px; max-width: 70ch; }
+  .method strong { color: var(--ink-dim); font-weight: 600; }
+
+  /* Who / cards */
+  .cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 40px; }
+  @media (max-width: 820px){ .cards { grid-template-columns: 1fr; } }
+  .card { border:1px solid var(--line); border-radius: 12px; padding: 24px; background: var(--bg-1); }
+  .card .ic { font-family: var(--mono); color: var(--pass); font-size: 13px; letter-spacing:.1em; }
+  .card h4 { margin: 12px 0 8px; font-size: 17px; }
+  .card p { color: var(--ink-dim); font-size: 14px; }
+
+  /* Quickstart */
+  .terminal { margin-top: 36px; border: 1px solid var(--line); border-radius: 12px; overflow:hidden; background: var(--bg-1); }
+  .terminal .bar { display:flex; gap:7px; padding: 12px 16px; border-bottom: 1px solid var(--line-soft); }
+  .terminal .bar i { width:11px; height:11px; border-radius:50%; background: var(--line); display:inline-block; }
+  .terminal pre { font-family: var(--mono); font-size: 13.5px; padding: 20px; overflow-x:auto; line-height: 1.85; color: var(--ink); }
+  .terminal .c { color: var(--ink-faint); }
+  .terminal .ok { color: var(--pass); }
+  .terminal .cmd2 { color: var(--ink); }
+  .terminal .cmd2 .x { color: var(--pass); }
+
+  /* trust strip */
+  .trust { display:flex; flex-wrap:wrap; gap: 14px 36px; margin-top: 30px; font-family: var(--mono); font-size: 13px; color: var(--ink-dim); }
+  .trust span .x { color: var(--pass); }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--line-soft); padding: 50px 0 64px; }
+  .foot-grid { display:flex; justify-content: space-between; flex-wrap: wrap; gap: 26px; }
+  .foot-links { display:flex; gap: 26px; flex-wrap: wrap; font-size: 14px; }
+  .foot-links a { color: var(--ink-dim); }
+  .foot-links a:hover { color: var(--ink); }
+  .foot-meta { font-family: var(--mono); font-size: 12.5px; color: var(--ink-faint); }
+  .foot-meta .x { color: var(--pass-dim); }
+
+  /* reveal */
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce){ .reveal { opacity:1; transform:none; transition:none; } html{ scroll-behavior:auto; } }
 </style>
 </head>
 <body>
-
-<div class="grid-bg"></div>
-
-<div class="container">
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-badge"><span class="dot"></span> Open Source — Apache 2.0</div>
-  <h1><span class="thin">Contracts</span> give AI agents <span class="highlight">your architecture.</span></h1>
-  <p class="hero-sub">ANMA is plain-YAML module contracts for AI coding agents. ~350 tokens per module — instead of re-reading thousands of lines of source code every session.</p>
-  <div class="hero-actions">
-    <a href="https://github.com/anma-labs/anma-scaffold" class="btn btn-primary">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-      Get Started
-    </a>
-    <a href="#benchmarks" class="btn btn-secondary">See Benchmarks</a>
+<header>
+  <div class="wrap nav">
+    <div class="brand">ANMA<span class="dot">.</span></div>
+    <nav class="nav-links">
+      <a href="#finding">Finding</a>
+      <a href="#how">How it works</a>
+      <a href="#benchmark">Benchmark</a>
+      <a href="https://pypi.org/project/anma/">PyPI</a>
+      <a class="gh" href="https://github.com/anma-labs/anma">GitHub →</a>
+    </nav>
   </div>
-</section>
+</header>
 
-<!-- NUMBERS -->
-<section class="numbers">
-  <div class="numbers-label">Measured across 9 builds</div>
-  <div class="numbers-grid">
-    <div class="stat stat--accent">
-      <div class="stat-value">6/6</div>
-      <div class="stat-label">ANMA builds run correctly first try</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">54<span class="unit">%</span></div>
-      <div class="stat-label">More tests generated (97 vs 63)</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">~350<span class="unit">tokens</span></div>
-      <div class="stat-label">Per module — full interface spec</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">24<span class="unit">checks</span></div>
-      <div class="stat-label">Linter + 7 architectural principles</div>
-    </div>
-  </div>
-</section>
+<main>
+  <!-- HERO -->
+  <section class="hero" style="border-top:none;">
+    <div class="wrap">
+      <div class="eyebrow reveal"><span class="pill">Apache-2.0</span> open source · on PyPI</div>
+      <h1 class="reveal">Boundary enforcement for <span class="accent">AI coding agents</span>.</h1>
+      <p class="lede reveal">Declare each module's interface and dependencies in plain YAML. <code>anma sync</code> compiles that into the <code>CLAUDE.md</code>, hooks, and CI checks that keep an agent inside your architecture — author once, enforce everywhere.</p>
 
-<!-- PROBLEM -->
-<section class="problem">
-  <span class="section-tag">The Problem</span>
-  <h2>Every new session, your AI agent re-reads everything.</h2>
-  <div class="problem-body">
-    <div class="problem-text">
-      <p>Every time you open Claude Code on an existing project, it scans your source files, infers interfaces, and guesses at conventions before writing a single line of code.</p>
-      <p>ANMA inverts this. Instead of dumping your codebase into context, you write contracts that declare your architecture in ~350 tokens per module. The AI reads contracts and starts building immediately — knowing every interface, dependency, error type, and behavioral invariant.</p>
-    </div>
-    <div class="compare">
-      <div class="compare-item">
-        <div class="compare-label"><span>Without ANMA (12-module project)</span><span>0 declared interfaces</span></div>
-        <div class="compare-bar bar-old"><span>99 cross-module imports, no documentation</span></div>
+      <div class="cta-row reveal">
+        <button class="install" id="install" title="Click to copy">
+          <span class="pfx">$</span>
+          <span class="cmd"><span class="x">pip</span> install anma[tach]</span>
+          <span class="copy" id="copy">copy</span>
+        </button>
+        <a class="btn primary" href="https://github.com/anma-labs/anma">View on GitHub</a>
+        <a class="btn" href="#benchmark">See the benchmark</a>
       </div>
-      <div class="compare-item">
-        <div class="compare-label"><span>With ANMA</span><span>36 declared interfaces</span></div>
-        <div class="compare-bar bar-new"><span>Declared. Validated.</span></div>
+
+      <!-- Instrument readout -->
+      <div class="readout reveal">
+        <div class="readout-head">
+          <span>payments-boundary · claude-haiku-4-5 · n=20</span>
+          <span class="live">measured</span>
+        </div>
+        <div class="gauge">
+          <div>
+            <div class="arm-label">Plain repo (control)</div>
+            <div class="big block">~68%</div>
+            <div class="arm-sub">violated the boundary — 13 of 19 scored runs</div>
+          </div>
+          <div class="arrow">
+            with<div class="line"></div>ANMA
+          </div>
+          <div>
+            <div class="arm-label">With ANMA</div>
+            <div class="big pass">0/20</div>
+            <div class="arm-sub">disallowed cross-module imports</div>
+          </div>
+        </div>
+        <div class="readout-foot">
+          <span class="stat">Fisher's exact <strong>p&lt;0.0001</strong></span>
+          <span class="stat">turn cost <strong>11.5 vs 10.3</strong></span>
+          <span class="stat">scored by an <strong>independent</strong> counter</span>
+        </div>
       </div>
     </div>
+  </section>
+
+  <!-- FINDING -->
+  <section id="finding">
+    <div class="wrap">
+      <div class="kicker reveal">The honest finding</div>
+      <h2 class="reveal">ANMA's value depends on the model. We publish both halves.</h2>
+      <p class="section-lede reveal">A frontier model respects a documented architecture on its own. A cheaper or faster model doesn't — and that's exactly where ANMA earns its place.</p>
+
+      <div class="tiers">
+        <div class="tier frontier reveal">
+          <div class="tag">Frontier · Claude Opus 4.8</div>
+          <h3>Already inside the lines</h3>
+          <div class="verdict">0 violations — with or without ANMA</div>
+          <p>Across the scenarios tested, Opus 4.8 never crossed the boundary on its own, and the ANMA arm used more turns. We don't claim ANMA makes a frontier model smarter, because the data says it doesn't.</p>
+        </div>
+        <div class="tier cheap reveal">
+          <div class="tag">Cheaper · Claude Haiku 4.5</div>
+          <h3>Routinely steps over</h3>
+          <div class="verdict">~68% → <span class="num">0 of 20</span></div>
+          <p>On <span class="num">payments-boundary</span>, Haiku violated the boundary in <span class="num">13 of 19</span> control runs and <span class="num">0 of 20</span> with ANMA. <span class="num">orders-inventory</span> pointed the same way (2/5 → 0/5).</p>
+        </div>
+      </div>
+
+      <div class="insight reveal">ANMA is insurance for running cheaper, faster agents — plus a CI/governance guarantee that holds no matter which model or human wrote the diff.</div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="kicker reveal">How it works</div>
+      <h2 class="reveal">Contracts are the source of truth. Everything else is generated.</h2>
+      <p class="section-lede reveal">You maintain small YAML contracts. <code style="font-family:var(--mono);color:var(--ink)">anma sync</code> compiles them so the architecture the agent reads can never drift from the rules CI enforces.</p>
+
+      <div class="flow">
+        <div class="tree reveal">
+<span class="src">anma.yaml</span>                      <span class="cm"># project config</span>
+<span class="src">src/domains/billing/</span>
+  <span class="src">anma.yaml</span>                    <span class="cm"># the module contract</span>
+  <span class="gen">CLAUDE.md</span>          <span class="cm">(gen) loads in billing/</span>
+<span class="gen">CLAUDE.md</span>            <span class="cm">(gen) architecture map</span>
+<span class="gen">.claude/rules/boundaries.md</span> <span class="cm">(gen)</span>
+<span class="gen">.claude/hooks/anma_pretooluse.py</span> <span class="cm">(gen)</span>
+<span class="gen">tach.toml</span>            <span class="cm">(gen) engine config</span>
+<span class="gen">.github/workflows/anma.yml</span> <span class="cm">(gen) CI</span>
+<span class="src">DECISIONS.md</span>         <span class="cm">why each boundary exists</span>
+        </div>
+
+        <div class="layers">
+          <div class="layer guide reveal">
+            <h4><span class="b">GUIDANCE</span> in-session steering</h4>
+            <p>The generated root and per-module <code style="font-family:var(--mono);color:var(--ink)">CLAUDE.md</code> put your architecture in the agent's context. This drove the 68% → 0 result — the model was steered to the right design and never attempted a bad edit.</p>
+          </div>
+          <div class="layer enforce reveal">
+            <h4><span class="b">ENFORCEMENT</span> the hard backstop</h4>
+            <p>A <code style="font-family:var(--mono);color:var(--ink)">PreToolUse</code> hook judges the proposed edit and blocks any new disallowed import before it lands. The same check runs at pre-commit and in CI.</p>
+            <div class="hookline">
+              $ forbidden edit → <span class="msg">ANMA: module 'accounts' may not import [billing]</span> · <span class="exit">exit 2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENCHMARK -->
+  <section id="benchmark">
+    <div class="wrap">
+      <div class="kicker reveal">Measured, not claimed</div>
+      <h2 class="reveal">The same task, with and without ANMA.</h2>
+      <p class="section-lede reveal">An independent scorer counts disallowed cross-module imports in the agent's final code against each scenario's declared graph. Incomplete runs are flagged and excluded, so a blocked run can't read as a clean pass.</p>
+
+      <div class="tablewrap reveal">
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario · model</th>
+              <th>Arm</th>
+              <th class="mono">Trials</th>
+              <th class="mono">Violations</th>
+              <th class="mono">Mean</th>
+              <th class="mono">Hook blocks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>payments-boundary · Haiku 4.5</td>
+              <td>control</td>
+              <td class="mono">20 (19 scored)</td>
+              <td class="v-block">13</td>
+              <td class="v-block">0.68</td>
+              <td class="dash">—</td>
+            </tr>
+            <tr>
+              <td>payments-boundary · Haiku 4.5</td>
+              <td>anma</td>
+              <td class="mono">20</td>
+              <td class="v-pass">0</td>
+              <td class="v-pass">0.00</td>
+              <td class="mono">0</td>
+            </tr>
+            <tr>
+              <td>payments-boundary · Opus 4.8</td>
+              <td>control</td>
+              <td class="mono">—</td>
+              <td class="v-pass">0</td>
+              <td class="v-pass">0.00</td>
+              <td class="dash">—</td>
+            </tr>
+            <tr>
+              <td>payments-boundary · Opus 4.8</td>
+              <td>anma</td>
+              <td class="mono">—</td>
+              <td class="v-pass">0</td>
+              <td class="v-pass">0.00</td>
+              <td class="mono">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="method reveal"><strong>Why hook blocks read 0:</strong> guidance prevented the violations before the hook was needed. The enforcement hook is verified separately to fire (a forbidden edit returns <span style="font-family:var(--mono);color:var(--block)">exit 2</span>). Both layers work — guidance does the work in practice, enforcement is the backstop. <strong>Limits:</strong> n=20 on one scenario, one model family, three hand-built scenarios. The raw per-trial data is committed in the repo.</p>
+      <div class="cta-row reveal" style="margin-top:26px;">
+        <a class="btn primary" href="https://github.com/anma-labs/anma/blob/main/docs/BENCHMARKS.md">Full methodology & data →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHO -->
+  <section id="who">
+    <div class="wrap">
+      <div class="kicker reveal">Who it's for</div>
+      <h2 class="reveal">Best where the agent isn't perfect.</h2>
+      <div class="cards">
+        <div class="card reveal">
+          <div class="ic">01 / COST</div>
+          <h4>Cheaper agent fleets</h4>
+          <p>Cost-sensitive pipelines, bulk tasks, non-frontier or non-Claude models that don't reliably respect an architecture on their own. This is where ANMA's steering is decisive.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic">02 / GUARANTEE</div>
+          <h4>An enforced architecture</h4>
+          <p>A guarantee in CI and pre-commit that module boundaries hold — regardless of which model, agent, or human authored the change.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic">03 / GOVERNANCE</div>
+          <h4>Architecture as data</h4>
+          <p>Declared interfaces, ownership compiled to CODEOWNERS, and docs that can't silently drift from the rules they describe.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUICKSTART -->
+  <section id="start">
+    <div class="wrap">
+      <div class="kicker reveal">Sixty seconds</div>
+      <h2 class="reveal">Install. Declare. Enforce.</h2>
+      <div class="terminal reveal">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <pre><span class="cmd2"><span class="x">pip</span> install anma[tach]</span>   <span class="c"># tach backend recommended; works without it too</span>
+<span class="cmd2"><span class="x">anma</span> init</span>                 <span class="c"># scaffolds contracts + a worked example</span>
+<span class="cmd2"><span class="x">anma</span> sync</span>                 <span class="c"># generates CLAUDE.md, hooks, tach.toml, CI</span>
+<span class="cmd2"><span class="x">anma</span> check</span>                <span class="ok"> ✓ boundaries respected</span></pre>
+      </div>
+      <div class="trust reveal">
+        <span><span class="x">~800</span> lines · readable in an afternoon</span>
+        <span><span class="x">zero</span> required dependencies</span>
+        <span>Trusted Publishing <span class="x">·</span> provenance <span class="x">·</span> SBOM</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div>
+      <div class="brand" style="margin-bottom:10px;">ANMA<span class="dot">.</span></div>
+      <div class="foot-meta">Boundary enforcement for AI coding agents.<br>© 2026 ANMA Labs LLC <span class="x">·</span> Apache-2.0</div>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/anma-labs/anma">GitHub</a>
+      <a href="https://pypi.org/project/anma/">PyPI</a>
+      <a href="https://github.com/anma-labs/anma/blob/main/docs/QUICKSTART.md">Quickstart</a>
+      <a href="https://github.com/anma-labs/anma/blob/main/docs/CONCEPTS.md">Concepts</a>
+      <a href="https://github.com/anma-labs/anma/blob/main/docs/BENCHMARKS.md">Benchmarks</a>
+    </div>
   </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section class="how" id="how">
-  <span class="section-tag--green">How It Works</span>
-  <h2>Define. Validate. Build.</h2>
-  <div class="steps">
-    <div class="step" data-step="01">
-      <div class="step-title">Define contracts</div>
-      <p>Each module gets a CONTRACT.yaml — inputs, outputs, error codes, and behavioral invariants. ~350 tokens per module. This is what your AI agent reads instead of source code.</p>
-    </div>
-    <div class="step" data-step="02">
-      <div class="step-title">Validate with the linter</div>
-      <p>24 structural checks plus 7 architectural principles catch undeclared dependencies, missing error codes, gateway violations, and naming issues — before implementation starts.</p>
-    </div>
-    <div class="step" data-step="03">
-      <div class="step-title">Build from contracts</div>
-      <p>Point Claude Code at your contracts. It implements interfaces exactly as specified. Contracts persist across sessions — no re-explaining your architecture.</p>
-    </div>
-  </div>
-</section>
-
-<!-- TERMINAL -->
-<section class="demo">
-  <h2>See it work.</h2>
-  <div class="terminal">
-    <div class="terminal-bar">
-      <div class="terminal-dot"></div>
-      <div class="terminal-dot"></div>
-      <div class="terminal-dot"></div>
-      <div class="terminal-title">~/my-project</div>
-    </div>
-    <div class="terminal-body">
-      <span class="line"><span class="prompt">anma →</span> <span class="cmd">python3 tools/lint_contracts.py --strict</span></span>
-      <span class="line"></span>
-      <span class="line"><span class="output">── Check 1: Contract cross-references ──</span></span>
-      <span class="line"><span class="output">── Check 2: GRAPH.yaml consistency ──</span></span>
-      <span class="line"><span class="output">── ...</span></span>
-      <span class="line"><span class="output">── Check 24: Gateway validation ──</span></span>
-      <span class="line"><span class="output">── Principle 1: Contracts over code ──</span></span>
-      <span class="line"><span class="output">── ...</span></span>
-      <span class="line"><span class="output">── Principle 7: Replacement over continuity ──</span></span>
-      <span class="line"></span>
-      <span class="line"><span class="success">  ✓ All checks passed.</span></span>
-    </div>
-  </div>
-</section>
-
-<!-- BENCHMARKS -->
-<section class="bench" id="benchmarks">
-  <span class="section-tag--green">Benchmarks</span>
-  <h2>Measured, not claimed.</h2>
-  <p class="bench-sub">3 projects built 3 ways each — without ANMA, with ANMA Sequential, and with ANMA + Dynamic Workflows. Then a feature was added to each.</p>
-  <table class="bench-table">
-    <thead>
-      <tr><th>First Build</th><th>Control</th><th>ANMA Sequential</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Finance Tracker (4 modules)</td><td>$1.30</td><td>$1.69</td></tr>
-      <tr><td>Task Manager (8 modules)</td><td>$1.53</td><td>$2.40</td></tr>
-      <tr><td>E-commerce (12 modules, 3 domains)</td><td>$2.00</td><td>$3.39</td></tr>
-      <tr><td>Runs correctly first try</td><td class="dim-cell">5/6</td><td class="highlight-cell">6/6</td></tr>
-      <tr><td>Tests generated (8-module)</td><td>42</td><td class="highlight-cell">75</td></tr>
-      <tr><td>Declared interfaces (12-module)</td><td>0</td><td class="highlight-cell">36</td></tr>
-      <tr><td>BUS event connections</td><td>0</td><td class="highlight-cell">17</td></tr>
-      <tr><td>Architecture documentation</td><td>0 lines</td><td class="highlight-cell">1,000+ lines</td></tr>
-    </tbody>
-  </table>
-  <div class="bench-link">
-    <a href="https://github.com/anma-labs/anma-scaffold/blob/main/docs/BENCHMARKS.md">Full benchmark data, methodology, and feature-addition results →</a>
-  </div>
-</section>
-
-<!-- RECOVERY PATTERN -->
-<section class="recovery">
-  <span class="section-tag--green">Architecture as Data</span>
-  <h2>Any agent. Any session. Zero ramp-up.</h2>
-  <p class="recovery-sub">A new AI agent reads these files and has full context to continue building. No onboarding, no "let me scan the codebase," no hallucinated interfaces.</p>
-  <div class="files-grid">
-    <div class="file-card" style="--i:0">
-      <div class="file-name">CONVENTIONS.yaml</div>
-      <div class="file-desc">Rules, patterns, and standards every module follows</div>
-      <div class="file-tokens">~1,400 tokens</div>
-    </div>
-    <div class="file-card" style="--i:1">
-      <div class="file-name">MANIFEST.yaml</div>
-      <div class="file-desc">All modules, their status, and ownership</div>
-      <div class="file-tokens">~90 tokens</div>
-    </div>
-    <div class="file-card" style="--i:2">
-      <div class="file-name">GRAPH.yaml</div>
-      <div class="file-desc">Dependency edges between modules</div>
-      <div class="file-tokens">~90 tokens</div>
-    </div>
-    <div class="file-card" style="--i:3">
-      <div class="file-name">CONTRACT.yaml</div>
-      <div class="file-desc">Interfaces, inputs, outputs, error codes, behavioral invariants</div>
-      <div class="file-tokens">~350 tokens per module</div>
-    </div>
-    <div class="file-card" style="--i:4">
-      <div class="file-name">STATE.yaml</div>
-      <div class="file-desc">Current implementation status and work-in-progress</div>
-      <div class="file-tokens">~30 tokens</div>
-    </div>
-    <div class="file-card" style="--i:5">
-      <div class="file-name">MEMORY.yaml</div>
-      <div class="file-desc">What the last agent learned — edge cases, decisions, gotchas</div>
-      <div class="file-tokens">~7 tokens</div>
-    </div>
-  </div>
-</section>
-
-<!-- DEMOS -->
-<section class="demos">
-  <h2>Inspect the code.</h2>
-  <div class="demo-grid">
-    <a href="https://github.com/anma-labs/anma-demo-finance-tracker" class="demo-card">
-      <div class="demo-card-title">Finance Tracker</div>
-      <div class="demo-card-meta">4 modules · 62 tests</div>
-      <p>Accounts, transactions, budgets, reports. Auto-budget updates, recurring transactions.</p>
-    </a>
-    <a href="https://github.com/anma-labs/anma-demo-task-manager" class="demo-card">
-      <div class="demo-card-title">Task Manager</div>
-      <div class="demo-card-meta">8 modules · 97 tests</div>
-      <p>BUS-driven notifications, activity feed, role-based permissions, task templates.</p>
-    </a>
-    <a href="https://github.com/anma-labs/anma-demo-ecommerce" class="demo-card">
-      <div class="demo-card-title">E-commerce Backend</div>
-      <div class="demo-card-meta">12 modules · 3 domains · 50 tests</div>
-      <p>GATEWAY enforcement, event-driven order flow, wishlists with price-drop notifications.</p>
-    </a>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="cta">
-  <h2>Start building.</h2>
-  <p>Clone the scaffold. Run the linter. Read a contract. You'll get it in 5 minutes.</p>
-  <div class="hero-actions">
-    <a href="https://github.com/anma-labs/anma-scaffold" class="btn btn-primary">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-      View on GitHub
-    </a>
-    <a href="https://github.com/anma-labs/anma-scaffold/blob/main/docs/BENCHMARKS.md" class="btn btn-secondary">Read Benchmarks</a>
-  </div>
-</section>
-
-</div>
-
-<footer class="container">
-  <span>&copy; 2026 ANMA Labs LLC</span>
-  <a href="mailto:legal@anmalabs.dev">legal@anmalabs.dev</a>
 </footer>
 
+<script>
+  // copy install command
+  const ic = document.getElementById('install'), cp = document.getElementById('copy');
+  ic.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText('pip install anma[tach]');
+      cp.textContent = 'copied'; cp.style.color = 'var(--pass)';
+      setTimeout(() => { cp.textContent = 'copy'; cp.style.color = ''; }, 1400);
+    } catch(e){ cp.textContent = 'select & copy'; }
+  });
+  // staggered reveal
+  const io = new IntersectionObserver((es) => {
+    es.forEach((e,i) => { if (e.isIntersecting){ setTimeout(()=>e.target.classList.add('in'), (i%6)*60); io.unobserve(e.target);} });
+  }, { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  // hero reveals immediately
+  document.querySelectorAll('.hero .reveal').forEach((el,i)=> setTimeout(()=>el.classList.add('in'), 80 + i*90));
+</script>
 </body>
 </html>
