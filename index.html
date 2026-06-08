@@ -185,6 +185,27 @@
   .card .ic { font-family: var(--mono); color: var(--pass); font-size: 13px; letter-spacing:.1em; }
   .card h4 { margin: 12px 0 8px; font-size: 17px; }
   .card p { color: var(--ink-dim); font-size: 14px; }
+  /* waitlist checkboxes */
+  .wl .checks { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+  @media (max-width:560px){ .wl .checks { grid-template-columns:1fr; } }
+  .wl .checks label { display:flex; align-items:flex-start; gap:9px; margin:0; padding:11px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg-1); cursor:pointer; font-family:inherit; font-size:13.5px; color:var(--ink-dim); letter-spacing:0; text-transform:none; }
+  .wl .checks label:hover { border-color:var(--ink-faint); }
+  .wl .checks input { width:auto; margin-top:2px; accent-color:var(--pass); }
+  /* faq */
+  .faq { margin-top:36px; display:grid; gap:18px; max-width:82ch; }
+  .faq .q { font-weight:600; font-size:15px; margin-bottom:6px; }
+  .faq .a { color:var(--ink-dim); font-size:14px; line-height:1.6; }
+  .faq .a code { font-family:var(--mono); color:var(--ink); background:var(--bg-2); padding:1px 5px; border-radius:4px; font-size:.9em; }
+  /* waitlist form */
+  .wl { margin-top:34px; max-width:560px; }
+  .wl .row { display:flex; gap:12px; }
+  @media (max-width:560px){ .wl .row { flex-direction:column; } }
+  .wl label { display:block; font-size:12px; color:var(--ink-faint); font-family:var(--mono); letter-spacing:.06em; margin:14px 0 6px; }
+  .wl input, .wl select, .wl textarea { width:100%; background:var(--bg-1); border:1px solid var(--line); border-radius:8px; padding:11px 12px; color:var(--ink); font-family:inherit; font-size:14px; box-sizing:border-box; }
+  .wl input:focus, .wl select:focus, .wl textarea:focus { outline:none; border-color:var(--pass-dim); }
+  .wl textarea { resize:vertical; min-height:72px; }
+  .wl .btn.primary { margin-top:20px; cursor:pointer; }
+  .wl .note { color:var(--ink-faint); font-size:12px; margin-top:12px; }
 
   /* Quickstart */
   .terminal { margin-top: 36px; border: 1px solid var(--line); border-radius: 12px; overflow:hidden; background: var(--bg-1); }
@@ -224,6 +245,7 @@
       <a href="#how">How it works</a>
       <a href="#benchmark">Benchmark</a>
       <a href="#languages">Languages</a>
+      <a href="#roadmap">Roadmap</a>
       <a href="https://pypi.org/project/anma/">PyPI</a>
       <a class="gh" href="https://github.com/anma-labs/anma">GitHub →</a>
     </nav>
@@ -495,6 +517,63 @@
     </div>
   </section>
 </main>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="kicker reveal">FAQ</div>
+      <h2 class="reveal">Honest answers.</h2>
+      <div class="faq reveal">
+        <div>
+          <div class="q">Will the CLI stay free?</div>
+          <div class="a">Yes &mdash; always, under Apache-2.0. If we add hosted features for teams, they'll be additive; the open-source CLI never becomes paywalled.</div>
+        </div>
+        <div>
+          <div class="q">Can I self-host everything?</div>
+          <div class="a">The CLI and every artifact it generates are yours to run anywhere. Any future hosted layer would be an optional service on top, not a replacement.</div>
+        </div>
+        <div>
+          <div class="q">Do you support agents other than Claude Code?</div>
+          <div class="a">Enforcement (hooks + CI) is agent-agnostic today. Guidance (<code>CLAUDE.md</code>) is Claude Code-native. Adapters for other agents are on the roadmap &mdash; tell us which agent you use below.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP / WAITLIST -->
+  <section id="roadmap">
+    <div class="wrap">
+      <div class="kicker reveal">What's next</div>
+      <h2 class="reveal">The CLI is free. Hosted features are coming.</h2>
+      <p class="section-lede reveal">ANMA is open source and stays that way. We're exploring a hosted layer for teams &mdash; CI boundary checks on private repos, PR reports, a cross-repo dashboard, and adapters for other agents. We're listening before we build: if a hosted layer would help your team, tell us what you'd actually use.</p>
+      <form class="wl reveal" action="https://formspree.io/f/mlgknrqa" method="POST">
+        <input type="hidden" name="_subject" value="ANMA waitlist signup">
+        <label>Which would you use? (pick any)</label>
+        <div class="checks">
+          <label><input type="checkbox" name="interested[]" value="Hosted CI checks (private repos)"> Hosted CI checks on private repos</label>
+          <label><input type="checkbox" name="interested[]" value="PR boundary reports"> PR boundary-health reports</label>
+          <label><input type="checkbox" name="interested[]" value="Cross-repo dashboard"> Cross-repo dashboard</label>
+          <label><input type="checkbox" name="interested[]" value="Other-agent adapters"> Adapters for other agents</label>
+        </div>
+        <div class="row">
+          <div style="flex:1"><label for="wl-name">Name</label><input id="wl-name" name="name" required></div>
+          <div style="flex:1"><label for="wl-email">Work email</label><input id="wl-email" type="email" name="email" required></div>
+        </div>
+        <div class="row">
+          <div style="flex:1"><label for="wl-company">Company</label><input id="wl-company" name="company"></div>
+          <div style="flex:1"><label for="wl-size">Team size</label>
+            <select id="wl-size" name="team_size">
+              <option>1&ndash;5</option><option>6&ndash;15</option><option>16&ndash;50</option><option>50+</option>
+            </select>
+          </div>
+        </div>
+        <label for="wl-pain">Your biggest pain point with AI agents and code quality?</label>
+        <textarea id="wl-pain" name="pain_point"></textarea>
+        <button type="submit" class="btn primary">Join the waitlist</button>
+        <div class="note">No spam, no payment. We'll email you when early access opens &mdash; the CLI stays free.</div>
+      </form>
+    </div>
+  </section>
 
 <footer>
   <div class="wrap foot-grid">
